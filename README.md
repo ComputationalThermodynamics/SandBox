@@ -11,9 +11,11 @@ Here you can find script(s) dealing with thermodynamic-related problems
 > - Julia scripts to use nullspace optimization approach to minimize individual site-fraction based solution phases.
 > - The scripts include spinel, clinopyroxene and amphibole as formulated in Holland et al., 2018.
 > - Gibbs hyperplane for each phase have been computed using MAGEMin and the igneous database.
->  12 kbar and 1100 °C for spinel, and 3.26 kbar and 906.25 °C for the spinel solvus test .
->  12 kbar and 1100 °C for clinopyroxene.
->  5 kbar and 650 °C for amphibole.
+<ol>
+<li>12 kbar and 1100 °C for spinel, and 3.26 kbar and 906.25 °C for the spinel solvus test<\li>
+<li>12 kbar and 1100 °C for clinopyroxene<\li>
+<li>5 kbar and 650 °C for amphibole<\li>
+<\ol>
 
 ## Gibbs free energy minimization
 
