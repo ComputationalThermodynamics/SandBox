@@ -2,11 +2,17 @@
 
 # Thermodynamic Sandbox
 
-Here you can find toy script(s) dealing with thermodynamic-related problems
+Here you can find script(s) dealing with thermodynamic-related problems
+
+## Nullspace minimizer
+
+> #### *NullspaceMinimization/nullMin.jl*
+>
+> - Julia scripts to use nullspace optimization approach to minimize individual site-fraction based solution phases.
 
 ## Gibbs free energy minimization
 
-> #### *MAGEMin_PGE_and_LP.m*
+> #### *PhaseEquilibriumMinimizer/MAGEMin_PGE_and_LP.m*
 >
 > - MATLAB script used in Riel et al., (2022) [Geochemistry, Geophysics, Geosystems, 23, 7] to present a simplified application of MAGEMin minimization approach (including feldspar, quartz and sillimanite) and compare it with linear programming. 
 > - The minimization is conducted in the NCKAS chemical system at 0.3 GPa and 873.15 K.
