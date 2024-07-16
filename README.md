@@ -29,6 +29,8 @@ Here you can find script(s) dealing with thermodynamic-related problems
     3. 12 kbar and 1100 °C for clinopyroxene
     4. 5 kbar and 650 °C for amphibole
 
+<img src="./pics/Figure_2_comparison.png" alt="drawing" width="640" alt="centered image"/>
+
 
 
 ## Gibbs free energy minimization
