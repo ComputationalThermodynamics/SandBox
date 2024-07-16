@@ -1,4 +1,3 @@
-<img src="./pics/Figure_LP_vs_PGE.png" alt="drawing" width="640" alt="centered image"/>
 
 # Thermodynamic Sandbox
 
@@ -40,4 +39,6 @@ Here you can find script(s) dealing with thermodynamic-related problems
 > - The minimization is conducted in the NCKAS chemical system at 0.3 GPa and 873.15 K.
 > - The Plagioclase model is taken after Holland et al., 2021
 > - The Linear programming approach described in de Capitani & Brown (1987)
+
+<img src="./pics/Figure_LP_vs_PGE.png" alt="drawing" width="640" alt="centered image"/>
 
