@@ -1,6 +1,6 @@
 # generate figure
 
-if join(ph.ph) == "spinel"
+if ph.ph == "spinel"
     minG    = []
     tms     = []
     n_out   = []
@@ -50,5 +50,5 @@ if join(ph.ph) == "spinel"
     scatter!(sf_in[1,:],sf_in[10,:],mc=:black,ms=1,xlabel="xMgT",ylabel="xTiM")
     scatter!(sf_out[1,:],sf_out[10,:],mc=:orange,markershape=:star,ms=5)
 
-    savefig("solvus_"*join(ph.ph)*".png")
+    savefig("solvus_"*ph.ph*".png")
 end

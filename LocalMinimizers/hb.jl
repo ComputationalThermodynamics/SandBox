@@ -12,7 +12,7 @@ include("hb_pc_list.jl")
 struct solution_phase{n_ox, n_sf, n_eq, n_em, n_xeos, n_W,  
                     n_ox_t_n_em, n_sf_t_n_sf, n_eq_t_n_sf, n_em_t_n_W, n_em_t_n_sf,    # number of entries in matrixes
                     N, _C, _T, _I}
-    ph          ::  NTuple{N, _C}       # name of phase
+    ph          ::  String       # name of phase
     n_eq_off    ::  MVector{n_sf, _I}
     P           ::  _T
     T           ::  _T
@@ -60,7 +60,7 @@ end
 """
 function init_phase(gam,test)
 
-    ph          = str2char("clino-amphibole"); 
+    ph          = "clino-amphibole"; 
     n_ox        = 11
     n_sf        = 17;
     n_eq        = 7;

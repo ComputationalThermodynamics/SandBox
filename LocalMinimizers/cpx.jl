@@ -12,7 +12,7 @@ include("cpx_pc_list.jl")
 struct solution_phase{n_ox, n_sf, n_eq, n_em, n_xeos, n_W,  
                     n_ox_t_n_em, n_em_t_n_em, n_sf_t_n_sf, n_eq_t_n_sf, n_em_t_n_W, n_em_t_n_sf,    # number of entries in matrixes
                     N, _C, _T, _I}
-    ph          ::  NTuple{N, _C}       # name of phase
+    ph          ::  String       # name of phase
     n_eq_off    ::  MVector{n_sf, _I}
     P           ::  _T
     T           ::  _T
@@ -34,6 +34,7 @@ struct solution_phase{n_ox, n_sf, n_eq, n_em, n_xeos, n_W,
 
     ig          ::  MVector{n_sf,_T}
     sf          ::  MVector{n_sf,_T}
+    cv          ::  MVector{n_xeos,_T}
     p           ::  MVector{n_em,_T}
     f           ::  MVector{1,_T}
     df          ::  MVector{n_em,_T}
@@ -59,7 +60,7 @@ end
 """
 function init_phase(gam,test)
 
-    ph          = str2char("clinopyroxene"); 
+    ph          = "clinopyroxene"; 
     n_ox        = 11
     n_sf        = 13;
     n_eq        = 4;
@@ -129,6 +130,7 @@ function init_phase(gam,test)
 
     ig          = MVector{n_sf}(zeros(n_sf));
     sf          = MVector{n_sf}(zeros(n_sf));
+    cv          = MVector{n_xeos}(zeros(n_xeos));
     dGdsf       = MVector{n_sf}(zeros(n_sf));
     grad        = MVector{n_sf}(zeros(n_sf));
     sf_off      = MVector{n_sf}(zeros(n_sf));
@@ -169,6 +171,7 @@ function init_phase(gam,test)
 
                             ig,
                             sf,
+                            cv,
                             p,
                             f,
                             df,
@@ -356,6 +359,22 @@ function get_gb!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_sf, 
     ph.v_nem    .= ph.emC*ph.gamma
     ph.gb       .= ph.g0 .- ph.v_nem;
     return nothing
+end
+
+
+function get_cv!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_sf, n_eq, n_em}
+    # sf   = [xMgM1, xFeM1, xAlM1, xFe3M1, xCrM1, xTiM1, xMgM2, xFeM2, xCaM2, xNaM2, xKM2, xSiT, xAlT];
+    ph.cv[1] = (ph.sf[2] + ph.sf[8])/(ph.sf[2] + ph.sf[8] + ph.sf[1] + ph.sf[7])
+    ph.cv[2] = 2*ph.sf[13]
+    ph.cv[3] = ph.sf[8] + ph.sf[7]
+    ph.cv[4] = ph.sf[10]
+    ph.cv[5] = -ph.cv[1] + ph.sf[2]/(ph.sf[2] + ph.sf[1])
+    ph.cv[6] = ph.sf[4]
+    ph.cv[7] = ph.sf[5]
+    ph.cv[8] = ph.sf[6]
+    ph.cv[9] = ph.sf[11]
+
+    return nothing;
 end
 
 

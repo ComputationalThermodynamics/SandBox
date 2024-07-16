@@ -7,16 +7,14 @@ using Statistics
 using Test
 using Plots
 
-
-include("utils.jl")
 include("sys_info.jl")
 
 #=
     Choose the solution phase to optimize here
 =#
-# include("hb.jl") 
-# include("cpx.jl")               
-include("spn.jl") 
+include("hb.jl")
+# include("cpx.jl")            
+# include("spn.jl")
 
 
 include("gradient_method.jl")           #import gradient based minimization methods
@@ -41,13 +39,14 @@ update_Nullspace!(gm,ph);
 
 # run test point
 ph.ig        .= get_ig(ph.pc_list[1,:]);
-null_min!(gv,ph,gm); 
+
+@benchmark null_min!(gv,ph,gm); 
 
 # Generate figures
-if 1==0
+if 1==1
     include("Fig_minTime_vs_distance.jl")
     include("Fig_minTime_vs_normDeltaGamma.jl")
-    include("Fig_solvus.jl")                            #select test 2 above, test 1 is without solvus for spinel
+    # include("Fig_solvus.jl")                            #select test 2 above, test 1 is without solvus for spinel
     include("Fig_mean_min_time.jl")
 end
 
