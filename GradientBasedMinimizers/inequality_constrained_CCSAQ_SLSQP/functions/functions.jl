@@ -4130,7 +4130,7 @@ function pc_list_cpx()
         0.996100 1.245100 0.996100 0.000100 0.000100 0.000100 0.249100 0.249100 0.000100;
         0.996100 1.245100 0.996100 0.000100 0.000100 0.249100 0.000100 0.249100 0.000100;
         0.996100 1.245100 0.996100 0.000100 0.000100 0.249100 0.249100 0.249100 0.000100]
-        
+
 
     return pc_list
 
@@ -9641,7 +9641,7 @@ function pc_list_hb()
         0.9901 0.9901 0.6601 0.9901 0.6601 0.0001 0.0001 0.0001 0.0001 0.3301;
         0.9901 0.9901 0.6601 0.9901 0.9901 0.0001 0.0001 0.0001 0.0001 0.0001;
         0.9901 0.9901 0.6601 0.9901 0.9901 0.0001 0.0001 0.0001 0.0001 0.3301]
-        
+
 
     return pc_list
 
@@ -11175,7 +11175,7 @@ function pc_list_spn()
         0.9970 0.9970 0.2500 0.0010 0.0000 0.2490 0.0000;
         0.9970 0.9970 0.2500 0.4990 0.0000 0.2490 0.2490;
         0.9970 0.9970 0.4990 0.0010 0.0000 0.2490 0.2490];
-        
+
 
     return pc_list
 
@@ -11196,12 +11196,9 @@ end
     - T :: Float64 : temperature
     - ph_id :: Int64 : phase id
 """
-function select_hb!()
+function select_hb()
 
     # 1 - spn, 4 - cpx, 7 - hb
-
-    gamma       = Vector{Float64}(undef, 11)
-    P, T, ph_id = Float64, Float64, Int64
 
     gamma       = [-960.9655,    -1768.2476,   -788.4474,    -678.9683,    -355.2975,    -914.9708,    -839.9561,    -1008.3630,   -263.7269,    -1262.6087,   -368.4674]
     P           =  5.0
@@ -11215,12 +11212,9 @@ function select_hb!()
     return gamma, pc, P, T, ph_id, ig, gamma_eq, sol
 end
 
-function select_cpx!()
+function select_cpx()
 
     # 1 - spn, 4 - cpx, 7 - hb
-
-    gamma       = Vector{Float64}(undef, 11)
-    P, T, ph_id = Float64, Float64, Int64
 
     gamma       = [-1011.909631, -1829.092564, -819.264126, -695.467358, -412.948568, -971.890270, -876.544354, -1073.640927, -276.590707, -1380.299631, 0.0]
     P           =  12.0
@@ -11236,12 +11230,9 @@ function select_cpx!()
 end
 
 
-function select_spn!()
+function select_spn()
 
     # 1 - spn, 4 - cpx, 7 - hb
-
-    gamma       = Vector{Float64}(undef, 11)
-    P, T, ph_id = Float64, Float64, Int64
 
     gamma       = [-1011.909631, -1829.092564, -819.264126, -695.467358, -412.948568, -971.890270, -876.544354, -1073.640927, -276.590707, -1380.299631, 0.0]
     P           =  12.0
@@ -11254,9 +11245,6 @@ function select_spn!()
     pc          = pc_list_spn();
     return gamma, pc, P, T, ph_id, ig, gamma_eq, sol
 end
-
-
-
 
 
 """
@@ -11279,8 +11267,8 @@ function testjl(pc      :: Vector{Float64},
                 ph_id   :: Int64,
                 gv, DB  )
 
-    gv.maxeval   		= 1024;	
-    gv.obj_tol   		= 1e-6;	
+    gv.maxeval   		= 1024;
+    gv.obj_tol   		= 1e-6;
 
     # set the chemical potential Gamma
 
@@ -11304,7 +11292,7 @@ function testjl(pc      :: Vector{Float64},
 
     x   = unsafe_wrap(Vector{Float64},SS_ref_db[ph_id].xeos,SS_ref_db[ph_id].n_xeos)
 
-    return xsol = copy(x)
+    return x
 end
 
 
@@ -11330,8 +11318,8 @@ function testjl_rot(ig      :: Vector{Float64},
                     ph_id   :: Int64,
                     gv, DB  )
 
-    gv.maxeval   		= 1024;	
-    gv.obj_tol   		= 1e-6;	
+    gv.maxeval   		= 1024;
+    gv.obj_tol   		= 1e-6;
 
     # set the chemical potential Gamma
 
@@ -11355,82 +11343,26 @@ function testjl_rot(ig      :: Vector{Float64},
 
     x   = unsafe_wrap(Vector{Float64},SS_ref_db[ph_id].xeos,SS_ref_db[ph_id].n_xeos)
 
-    return xsol = copy(x)
+    return x
 end
 
+"""
+    select_ph!(ph::Symbol)
 
+    Select the phase to minimize
 
-function Fig_minTime_vs_normDeltaGamma(ph, gamma, pc, P, T, ph_id, ig, gamma_eq, sol)
+    # Arguments
+    - ph :: Symbol : phase name
 
-    tms     = []
-    xeostot = []
-    np      = size(pc,1)
-    nt      = 0
-
-        x_in   = Vector{Float64}[]
-        x_out  = Vector{Float64}[]
-        for i = 1:np
-            t = @elapsed (xeos = testjl(pc[i,:], gamma, ph_id, data.gv[1], data.DB[1]))
-            
-            if abs(norm(xeos) - norm(sol)) < 1e-4
-                push!(tms,t)
-                push!(x_in,pc[i,:])
-                push!(x_out,xeos)
-                nt  += 1
-            end
-        end
-
-    print("std(tms) =  $(std(tms))\nmean(tms) =  $(mean(tms))\nminimum(tms) =  $(minimum(tms))\nmaximum(tms) =  $(maximum(tms))\n")
-
-    plot()
-    d = zeros(nt);
-    for i=1:nt
-        d[i] = norm(x_out[i,:] .- x_in[i,:])
+"""
+function select_ph(ph::Symbol)
+    if ph == :hb
+        select_hb()
+    elseif ph == :cpx
+        select_cpx()
+    elseif ph == :spn
+        select_spn()
+    else
+        error("Unknown phase: $ph")
     end
-    leg = string(nt)*" points";
-    scatter!(d,tms*1e6,ma=0.4,mc=:gray,ms=2,xlabel="Norm(SFᶠ - SFⁱ)",ylabel="Minimization time [µs]",title=ph,legend=false, label=leg, dpi=300)
-    plot!(legend=:bottomright, legendcolumns=1)
-    if ph == "hb"
-        ylims!((150.0,1000))
-    elseif ph == "spn"
-        ylims!((50.0,300))
-    elseif ph == "cpx"
-        ylims!((50.0,800))
-    end
-
-    savefig("tms_vs_distance_"*ph*".png")
-
-    return nothing
-end
-
-
-function Fig_mean_min_time(ph, gamma, pc, P, T, ph_id, ig, gamma_eq, sol)
-    np      = 10000 
-    tms     = []
-    xeostot = []
-    gam     = []
-
-    for i = 1:np
-        gamma .= gamma_eq .+ 40.0*(rand()-0.5)
-        push!(gam,Array(gamma));
-        t = @elapsed (xeos = testjl_rot(ig, gamma, ph_id, data.gv[1], data.DB[1]))
-        push!(tms,t)
-        push!(xeostot,xeos)
-    end
-
-
-    plot()
-    d = zeros(np)
-    for i=1:np
-        d[i] = norm(gam[i] .- gamma_eq)
-    end
-    leg = string(np)*" points";
-    scatter!(d,tms*1e6,ma=0.4,mc=:gray,ms=2,xlabel="Norm(ΔΓ)",ylabel="Minimization time [µs]",title="spinel",legend=false, label=leg, dpi=300)
-    plot!(legend=:bottomright, legendcolumns=1)
-    ylims!((0.0,500))
-
-
-    savefig("tms_vs_normdG_"*ph*"_MAGEMin.png")
-
-    return nothing
 end

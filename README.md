@@ -31,7 +31,18 @@ Here you can find script(s) dealing with thermodynamic-related problems
 
 <img src="./pics/Figure_2_comparison.png" alt="drawing" width="640" alt="centered image"/>
 
+To fully reproduce the results, clone or download this repository and launch Julia in project mode `julia --project` from the folder GradientBasedMinimizers and `instantiate` or `resolve` the dependencies from within the REPL in package mode `julia> ]`.
 
+The scripts can be launched either from the REPL:
+```julia-repl
+julia> include("GradientBasedMinimizers/NLopt_call_using_MAGEMin.jl")
+```
+or executed from the shell as:
+```shells
+julia --project GradientBasedMinimizers/NLopt_call_using_MAGEMin.jl
+```
+
+By default, the phase is spinel. To change it to amphibole or clinopyroxene, modify the `ph` variable in the scripts.
 
 ## Gibbs free energy minimization
 

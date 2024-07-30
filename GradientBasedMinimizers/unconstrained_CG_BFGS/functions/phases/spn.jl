@@ -1,8 +1,4 @@
 # Spinel data (Igneous database, Holland et al., 2018)
-using StaticArrays;
-using LinearAlgebra;
-using BenchmarkTools
-
 
 include("spn_pc_list.jl")
 
@@ -87,7 +83,7 @@ function init_phase(gam,test)
 
 
     emC         = SMatrix{n_ox, n_em}(
-                   [    +0.0  +1.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0
+                [    +0.0  +1.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0
                         +0.0  +1.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0;
                         +0.0  +1.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0;
                         +0.0  +1.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0;
@@ -101,7 +97,7 @@ function init_phase(gam,test)
     A           = SMatrix{n_eq, n_sf}(
                     [       1.   1.  1. 1.  0.  0. 0. 0. 0. 0.;
                             0.5  0.5 0. 0.  2.  2. 1. 1. 1. 0.;
-                           -0.5 -0.5 0. 0. -1. -1. 0. 0. 0. 1.]
+                        -0.5 -0.5 0. 0. -1. -1. 0. 0. 0. 1.]
                     );
 
     v            = SVector{1}([0.]);
@@ -146,8 +142,8 @@ function init_phase(gam,test)
     pcs         = pc_list()         # appears slow (type instable?)
 
     spn =  solution_phase{n_ox, n_sf, n_eq, n_em, n_xeos, n_W, 
-                         n_ox*n_em, n_sf*n_sf, n_em*n_em, n_eq*n_sf, n_em*n_sf,  
-                         length(ph), Char, Float64, Int64}(   
+                        n_ox*n_em, n_sf*n_sf, n_em*n_em, n_eq*n_sf, n_em*n_sf,  
+                        length(ph), Char, Float64, Int64}(   
                             ph,
                             n_eq_off,
                             
@@ -249,7 +245,7 @@ function get_dpdsf!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_s
     ph.dpdsf[6,1] = 0;      ph.dpdsf[6,2] = 0;      ph.dpdsf[6,3] = 2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[6,4] = 2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2*ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 4*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2/3 + 2/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[6,5] = 0;      ph.dpdsf[6,6] = 0;      ph.dpdsf[6,7] = 4*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 8*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 4*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[6,8] = 4*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 4*ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 8*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 8*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 4*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2/3 + 4/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[6,9] = -2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[6,10] = -4*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      
     ph.dpdsf[7,1] = 0;      ph.dpdsf[7,2] = 0;      ph.dpdsf[7,3] = 0;      ph.dpdsf[7,4] = 0;      ph.dpdsf[7,5] = 0;      ph.dpdsf[7,6] = 0;      ph.dpdsf[7,7] = 0;      ph.dpdsf[7,8] = 0;      ph.dpdsf[7,9] = 1;      ph.dpdsf[7,10] = 0;      
     ph.dpdsf[8,1] = 0;      ph.dpdsf[8,2] = 0;      ph.dpdsf[8,3] = 0;      ph.dpdsf[8,4] = 0;      ph.dpdsf[8,5] = 0;      ph.dpdsf[8,6] = 0;      ph.dpdsf[8,7] = 0;      ph.dpdsf[8,8] = 0;      ph.dpdsf[8,9] = 0;      ph.dpdsf[8,10] = 2;  
- 
+
     return nothing
 end
 
@@ -445,4 +441,3 @@ function compute_G_dG!(gm,ph::solution_phase{n_ox, n_sf, n_eq, n_em},gv) where {
     return nothing
 
 end
-
