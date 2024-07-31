@@ -4,50 +4,65 @@ using StaticArrays;
 using LinearAlgebra;
 using BenchmarkTools
 using Statistics
-using Test
 using Plots
 
-include("sys_info.jl")
+# change path to the location of this file
+cd(@__DIR__)
 
-#=
-    Choose the solution phase to optimize here
-=#
-include("hb.jl")
-# include("cpx.jl")            
-# include("spn.jl")
+include("functions/sys_info.jl")
+include("functions/figures/figures.jl")
 
+"""
+    select_ph!(ph::Symbol)
 
-include("gradient_method.jl")           #import gradient based minimization methods
+Selects and includes the appropriate phase and gradient method files based on the provided phase symbol.
+"""
+function select_ph!(ph::Symbol)
+    if ph == :hb
+        include("functions/phases/hb.jl")
+        include("functions/gradient_method.jl")
+    elseif ph == :cpx
+        include("functions/phases/cpx.jl")
+        include("functions/gradient_method.jl")
+    elseif ph == :spn
+        include("functions/phases/spn.jl")
+        include("functions/gradient_method.jl")
+    else
+        error("Unknown phase: $ph")
+    end
+end
 
-gam  = "eq";                            #choose the reference Gibbs hyperplane: em, pc, eq (endmember only, endmember+pseudocompounds, equilibrium):  
-gopt = "BFGS";                          #choose gradient based minimization method: cg, BFGS (conjugate-gradient, BFGS)
-test = 1                                #choose test (only for spinel, choose 1 or 2. 2 -> solvus)
+#choose the reference Gibbs hyperplane: em, pc, eq (endmember only, endmember+pseudocompounds, equilibrium):
+gam  = "eq";
+#choose gradient based minimization method: cg, BFGS (conjugate-gradient, BFGS)
+gopt = :BFGS;
+gv = init_sys_infos();
 
-gv = init_sys_infos();                  #Initialize system informations
+# select phase (:hb, :cpx, :spn)
+ph = :spn;
+select_ph!(ph);
+
+#choose test (only for spinel, choose 1 or 2. 2 -> solvus)
+test = 1;
+
+#Initialize system informations
 ph = init_phase(gam,test);              #initialize phase to minimize
-gm = init_gradient_methods(gopt,ph);    #initialize gradient method
+gm = init_gradient_methods(ph);    #initialize gradient method
 
-
-if gopt == "BFGS"
+if gopt == :BFGS
     null_min! = ((gv,ph,gm)) -> null_min_BFGS!(gv,ph,gm);
-elseif gopt == "CG"
+elseif gopt == :CG
     null_min! = ((gv,ph,gm)) -> null_min_CG!(gv,ph,gm);
 end
 
 # retrieve the nullspace
 update_Nullspace!(gm,ph);
 
-# run test point
-ph.ig        .= get_ig(ph.pc_list[1,:]);
+# generate figures
+generate_min_time_vs_distance_figure(ph, gv, gm)
+generate_min_time_vs_normDeltaGamma_figure(ph, gv, gm)
+create_box_plot()
 
-@benchmark null_min!(gv,ph,gm); 
-
-# Generate figures
-if 1==1
-    include("Fig_minTime_vs_distance.jl")
-    include("Fig_minTime_vs_normDeltaGamma.jl")
-    # include("Fig_solvus.jl")                            #select test 2 above, test 1 is without solvus for spinel
-    include("Fig_mean_min_time.jl")
+if test == 2
+    generate_figure_solvus(ph, gv, gm)
 end
-
-

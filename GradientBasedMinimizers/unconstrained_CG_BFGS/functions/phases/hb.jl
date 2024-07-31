@@ -1,8 +1,4 @@
 # Amphibole data (Igneous database, Holland et al., 2018)
-using StaticArrays;
-using LinearAlgebra;
-using BenchmarkTools
-
 
 include("hb_pc_list.jl")
 
@@ -81,7 +77,7 @@ function init_phase(gam,test)
     gamma_pc    = SVector{n_ox}([-961.71227941038239350746, -1771.52191784699380150414, -783.52863672690375551610, -677.79113957713559557305, -353.68501121475600257327, -914.23627998836889219092, -832.35986650281336096668, -1012.53500402691236104147, -266.50224273504522898293, -1261.40041144356951008376, -368.23894675409849241987]);
 
     emC         = SMatrix{n_ox, n_em}(
-                   [    +8.0  +0.0  +2.0  +5.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +1.0;
+                [    +8.0  +0.0  +2.0  +5.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +1.0;
                         +6.0  +2.0  +2.0  +3.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +1.0;
                         +6.0  +1.5  +2.0  +4.0  +0.0  +0.0  +0.5  +0.0  +0.0  +0.0  +1.0;
                         +8.0  +1.0  +0.0  +3.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0  +1.0;
@@ -96,7 +92,7 @@ function init_phase(gam,test)
 
 
     A           = SMatrix{n_eq, n_sf}(
-                  [ 1 1 1 0 0    0    0  0  0 0    0    0    0 0 0 0 0;
+                [ 1 1 1 0 0    0    0  0  0 0    0    0    0 0 0 0 0;
                     0 0 0 1 1    0    0  0  0 0    0    0    0 0 0 0 0;
                     0 0 0 0 0    1    1  1  1 1    0    0    0 0 0 0 0;
                     0 0 0 0 0    0    0  0  0 0    1    1    1 1 0 0 0;
@@ -149,8 +145,8 @@ function init_phase(gam,test)
     pcs         = pc_list()         # appears slow (type instable?)
 
     hb =  solution_phase{n_ox, n_sf, n_eq, n_em, n_xeos, n_W, 
-                         n_ox*n_em, n_sf*n_sf, n_eq*n_sf, n_em*n_W, n_em*n_sf,  
-                         length(ph), Char, Float64, Int64}(   
+                        n_ox*n_em, n_sf*n_sf, n_eq*n_sf, n_em*n_W, n_em*n_sf,  
+                        length(ph), Char, Float64, Int64}(   
                             ph,
                             n_eq_off,
                             

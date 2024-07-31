@@ -296,7 +296,3 @@ function import_activity_models_TC(filename::String)
 end
 
 ss = import_activity_models_TC("TC_database/igneous_set_full_descriptions_NewForm.txt")
-
-# for key in keys(ss)
-#     print(ss[key],"\n")
-# end

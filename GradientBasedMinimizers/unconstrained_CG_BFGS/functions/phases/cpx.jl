@@ -1,8 +1,4 @@
 # Clinopyroxene data (Igneous database, Holland et al., 2018)
-using StaticArrays;
-using LinearAlgebra;
-using BenchmarkTools
-
 
 include("cpx_pc_list.jl")
 
@@ -82,7 +78,7 @@ function init_phase(gam,test)
     gamma_pc    = SVector{n_ox}([-1006.885527, -1833.130473, -821.014905, -697.963191, -415.466554, -947.276954, -901.557511, -1058.244567, -236.176855, -1359.230803, 0.0]);
 
     emC         = SMatrix{n_ox, n_em}(
-                   [    +2.000000  +0.000000  +1.000000  +1.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000;
+                [    +2.000000  +0.000000  +1.000000  +1.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000;
                         +2.000000  +0.000000  +0.000000  +0.000000  +2.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000;
                         +1.000000  +1.000000  +1.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000;
                         +1.000000  +0.500000  +1.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.000000  +0.500000  +0.000000;
@@ -146,8 +142,8 @@ function init_phase(gam,test)
     pcs         = pc_list()         # appears slow (type instable?)
 
     cpx =  solution_phase{n_ox, n_sf, n_eq, n_em, n_xeos, n_W, 
-                         n_ox*n_em, n_em*n_em, n_sf*n_sf, n_eq*n_sf, n_em*n_W, n_em*n_sf,  
-                         length(ph), Char, Float64, Int64}(   
+                        n_ox*n_em, n_em*n_em, n_sf*n_sf, n_eq*n_sf, n_em*n_W, n_em*n_sf,  
+                        length(ph), Char, Float64, Int64}(   
                             ph,
                             n_eq_off,
                             
@@ -478,4 +474,6 @@ function compute_G_dG!(gm,ph::solution_phase{n_ox, n_sf, n_eq, n_em},gv) where {
     return nothing
 
 end
+
+
 

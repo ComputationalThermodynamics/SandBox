@@ -52,7 +52,7 @@ end
 """
     function to allocate the memory necessary to conducte gradient based optimization methods
 """
-function init_gradient_methods(gopt,ph::solution_phase{n_ox, n_sf, n_eq, n_em, n_xeos, n_W}) where {n_ox, n_sf, n_eq, n_em, n_xeos, n_W}
+function init_gradient_methods(ph::solution_phase{n_ox, n_sf, n_eq, n_em, n_xeos, n_W}) where {n_ox, n_sf, n_eq, n_em, n_xeos, n_W}
     G_track  = MVector{2048}(zeros(2048));
     G0_out    = MVector{1}(zeros(1));
     G0        = MVector{1}(zeros(1));
@@ -270,10 +270,7 @@ function backTrackingLineSearch!(gv,ph,gm)
     gm.pkur    .= .-gm.pk./gm.ur[1];
     ph.sf      .=  gm.x .+ t.*gm.pkur;
 
-    stp         =  gm.pkur'*ph.grad;
-    if stp < -1.0
-        stp = -1.0
-    end
+    stp         = max(gm.pkur' * ph.grad, -1.0)
 
     compute_G!(ph,gv);
     lhs         =  ph.G[1];
