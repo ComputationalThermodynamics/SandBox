@@ -52,13 +52,13 @@ end
 """
     Get constant parameters
 """
-function init_phase(gam,test)
+function init_phase(gam, test)
 
     ph          = "spinel"; 
     n_ox        = 11
     n_sf        = 10;
     n_eq        = 3;
-    n_eq_off    = MVector{n_sf}(zeros(Int64,n_sf));
+    n_eq_off    = MVector{n_sf, Int64}(zeros(Int64, n_sf));
     n_em        = 8;
     n_xeos      = 7;
     n_W         = 28;   # perhaps this can be computed somehow from the variables above?
@@ -83,21 +83,25 @@ function init_phase(gam,test)
 
 
     emC         = SMatrix{n_ox, n_em}(
-                [    +0.0  +1.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0
-                        +0.0  +1.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0;
-                        +0.0  +1.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0;
-                        +0.0  +1.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0;
-                        +0.0  +0.0  +0.0  +0.0  +3.0  +0.0  +0.0  +0.0  +1.0  +0.0  +0.0;
-                        +0.0  +0.0  +0.0  +0.0  +3.0  +0.0  +0.0  +0.0  +1.0  +0.0  +0.0;
-                        +0.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +1.0  +0.0;
-                        +0.0  +0.0  +0.0  +2.0  +0.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0]
-                        );
+                    [   
+                        +0.0  +1.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0
+                        +0.0  +1.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0
+                        +0.0  +1.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0
+                        +0.0  +1.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0
+                        +0.0  +0.0  +0.0  +0.0  +3.0  +0.0  +0.0  +0.0  +1.0  +0.0  +0.0
+                        +0.0  +0.0  +0.0  +0.0  +3.0  +0.0  +0.0  +0.0  +1.0  +0.0  +0.0
+                        +0.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0  +0.0  +0.0  +1.0  +0.0
+                        +0.0  +0.0  +0.0  +2.0  +0.0  +0.0  +0.0  +1.0  +0.0  +0.0  +0.0
+                    ]
+                );
 
 
     A           = SMatrix{n_eq, n_sf}(
-                    [       1.   1.  1. 1.  0.  0. 0. 0. 0. 0.;
-                            0.5  0.5 0. 0.  2.  2. 1. 1. 1. 0.;
-                        -0.5 -0.5 0. 0. -1. -1. 0. 0. 0. 1.]
+                        [  
+                            1.   1.  1. 1.  0.  0. 0. 0. 0. 0.
+                            0.5  0.5 0. 0.  2.  2. 1. 1. 1. 0.
+                           -0.5 -0.5 0. 0. -1. -1. 0. 0. 0. 1.
+                        ]
                     );
 
     v            = SVector{1}([0.]);
@@ -198,10 +202,9 @@ function get_f!(ph,gv)
 
     #mul!(ph.v_nem,ph.emC,gv.apo);
     ph.v_nem .= ph.emC*gv.apo
-
-    v         = ph.p'*ph.v_nem
-    ph.f     .= (ph.bulk'*gv.apo)/(v);
-    ph.df    .= (ph.v_nem)./(v);
+    _v        = inv(ph.p ⋅ ph.v_nem)
+    ph.f     .= (ph.bulk ⋅ gv.apo) * _v
+    ph.df    .= (ph.v_nem) .* _v
 
     return nothing
 end
@@ -210,22 +213,33 @@ end
 """
     Computes endmember proportions
 """
-function get_p!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_sf, n_eq, n_em}
+function get_p!(ph::solution_phase)
 
-    for i=1:lastindex(ph.sf)
+    for i in eachindex(ph.sf)
         if (ph.sf_off == 1)
             ph.sf[i] = 0.0;
         end
     end
 
-    ph.p[1]          = -ph.sf[9] - 2*ph.sf[5]/3 + 2*ph.sf[1]/3 - 2*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - 4*ph.sf[10]/3 - (2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) + 1/3;
-    ph.p[2]          = 2*ph.sf[5]/3 - 2*ph.sf[1]/3 - 4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - 2*ph.sf[10]/3 - 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) + 2/3;
-    ph.p[3]          = ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 2*ph.sf[8]/3 + 2*ph.sf[4]/3 - 2*ph.sf[6]/3 + 2*ph.sf[2]/3 + 2*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 2*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - (2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + (2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));
-    ph.p[4]          = 2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 2*ph.sf[8]/3 - 2*ph.sf[4]/3 + 2*ph.sf[6]/3 - 2*ph.sf[2]/3 + 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));
-    ph.p[5]          = -ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 2*ph.sf[8]/3 - 2*ph.sf[4]/3 - 2*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + (2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));
-    ph.p[6]          = -2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 2*ph.sf[8]/3 + 2*ph.sf[4]/3 - 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));
-    ph.p[7]          = ph.sf[9];
-    ph.p[8]          = 2*ph.sf[10];
+    c1  = @muladd (2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]))
+    c2  = @muladd (2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]))
+    c3  = 2*ph.sf[1]/3
+    c4  = 2*ph.sf[5]/3
+    c6  = 2*ph.sf[4]/3
+    c9  = 2*ph.sf[6]/3
+    c10 = 2*ph.sf[10]
+    c11 = 2*ph.sf[2]/3
+    c12 = 2*ph.sf[8]/3
+    c13 = 4*ph.sf[10]
+
+    ph.p[1] = @muladd -ph.sf[9] - c4 + c3 - c10 * c2 - 2*c10/3 - c2 + 1/3;
+    ph.p[2] = @muladd c4 - c3 - c13 * c2 - c10/3 - 2*c2 + 2/3;
+    ph.p[3] = @muladd ph.sf[9]*c1 - c12 + c6 - c9 + c11 + c10*c1 + c10*c2 - c1 + c2;
+    ph.p[4] = @muladd 2*ph.sf[9]*c1 + c12 - c6 + c9 - c11 + c13*c1 + c13*c2 - 2*c1 + 2*c2;
+    ph.p[5] = @muladd -ph.sf[9]*c1 + c12 - 2*ph.sf[4]/3 - 2*ph.sf[10]*c1 + c1;
+    ph.p[6] = @muladd -2*ph.sf[9]*c1 - c12 + 2*ph.sf[4]/3 - c13*c1 + 2*c1;
+    ph.p[7] = ph.sf[9];
+    ph.p[8] = c10;
 
     return nothing
 end
@@ -234,17 +248,32 @@ end
 """
     Computes partial derivative of endmember fraction as function of site fraction
 """
-function get_dpdsf!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_sf, n_eq, n_em}
-
-
-    ph.dpdsf[1,1] = 2*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + (2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 2/3;      ph.dpdsf[1,2] = 2*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 2*ph.sf[10]/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) + (2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 1/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      ph.dpdsf[1,3] = 0;      ph.dpdsf[1,4] = 0;      ph.dpdsf[1,5] = 4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 2/3;      ph.dpdsf[1,6] = 4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 4*ph.sf[10]/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) + 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 2/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      ph.dpdsf[1,7] = 0;      ph.dpdsf[1,8] = 0;      ph.dpdsf[1,9] = -1;      ph.dpdsf[1,10] = -2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - 4/3;      
-    ph.dpdsf[2,1] = 4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 2/3;      ph.dpdsf[2,2] = 4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 4*ph.sf[10]/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) + 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 2/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      ph.dpdsf[2,3] = 0;      ph.dpdsf[2,4] = 0;      ph.dpdsf[2,5] = 8*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 4*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 2/3;      ph.dpdsf[2,6] = 8*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 8*ph.sf[10]/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) + 4*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 4/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      ph.dpdsf[2,7] = 0;      ph.dpdsf[2,8] = 0;      ph.dpdsf[2,9] = 0;      ph.dpdsf[2,10] = -4*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - 2/3;      
-    ph.dpdsf[3,1] = -2*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - (2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2);      ph.dpdsf[3,2] = -2*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 2*ph.sf[10]/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - (2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 2/3 + 1/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      ph.dpdsf[3,3] = -ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + (2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[3,4] = -ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 2*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + (2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2/3 - 1/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[3,5] = -4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2);      ph.dpdsf[3,6] = -4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 4*ph.sf[10]/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 2/3 + 2/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      ph.dpdsf[3,7] = -2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[3,8] = -2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2*ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 4*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2/3 - 2/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[3,9] = (2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[3,10] = 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      
-    ph.dpdsf[4,1] = -4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2);      ph.dpdsf[4,2] = -4*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 4*ph.sf[10]/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - 2*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 2/3 + 2/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      ph.dpdsf[4,3] = -2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[4,4] = -2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2*ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 4*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2/3 - 2/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[4,5] = -8*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) - 4*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2);      ph.dpdsf[4,6] = -8*ph.sf[10]*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 8*ph.sf[10]/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])) - 4*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1])^2) + 2/3 + 4/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      ph.dpdsf[4,7] = -4*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 8*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 4*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[4,8] = -4*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 4*ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 8*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 8*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 4*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2/3 - 4/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[4,9] = 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[4,10] = 4*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 4*(2*ph.sf[6] + ph.sf[2])/(3*(2*ph.sf[6] + ph.sf[2] + 2*ph.sf[5] + ph.sf[1]));      
-    ph.dpdsf[5,1] = 0;      ph.dpdsf[5,2] = 0;      ph.dpdsf[5,3] = ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - (2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[5,4] = ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 2*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - (2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2/3 + 1/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[5,5] = 0;      ph.dpdsf[5,6] = 0;      ph.dpdsf[5,7] = 2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[5,8] = 2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2*ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 4*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2/3 + 2/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[5,9] = -(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[5,10] = -2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      
-    ph.dpdsf[6,1] = 0;      ph.dpdsf[6,2] = 0;      ph.dpdsf[6,3] = 2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[6,4] = 2*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2*ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 4*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 4*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 2/3 + 2/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[6,5] = 0;      ph.dpdsf[6,6] = 0;      ph.dpdsf[6,7] = 4*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) + 8*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 4*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2);      ph.dpdsf[6,8] = 4*ph.sf[9]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 4*ph.sf[9]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) + 8*ph.sf[10]*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 8*ph.sf[10]/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])) - 4*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4])^2) - 2/3 + 4/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[6,9] = -2*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      ph.dpdsf[6,10] = -4*(2*ph.sf[8] + ph.sf[4])/(3*(2*ph.sf[7] + ph.sf[3] + 2*ph.sf[8] + ph.sf[4]));      
-    ph.dpdsf[7,1] = 0;      ph.dpdsf[7,2] = 0;      ph.dpdsf[7,3] = 0;      ph.dpdsf[7,4] = 0;      ph.dpdsf[7,5] = 0;      ph.dpdsf[7,6] = 0;      ph.dpdsf[7,7] = 0;      ph.dpdsf[7,8] = 0;      ph.dpdsf[7,9] = 1;      ph.dpdsf[7,10] = 0;      
-    ph.dpdsf[8,1] = 0;      ph.dpdsf[8,2] = 0;      ph.dpdsf[8,3] = 0;      ph.dpdsf[8,4] = 0;      ph.dpdsf[8,5] = 0;      ph.dpdsf[8,6] = 0;      ph.dpdsf[8,7] = 0;      ph.dpdsf[8,8] = 0;      ph.dpdsf[8,9] = 0;      ph.dpdsf[8,10] = 2;  
+@fastmath function get_dpdsf!(ph::solution_phase)
+    x   = SVector(ph.sf)
+    T   = eltype(x)
+    # constants 
+    c1  = @muladd (2*x[6] + x[2])/(3*(2*x[6] + x[2] + 2*x[5] + x[1])^2)
+    c21 = @muladd (3*(2*x[6] + x[2] + 2*x[5] + x[1]))
+    c2  = x[10]/c21
+    c3  = @muladd (2*x[6] + x[2])/c21
+    c6  = @muladd (2*x[8] + x[4])
+    c4  = @muladd c6/(3*(2*x[7] + x[3] + 2*x[8] + x[4])^2)
+    c5  = @muladd (3*(2*x[7] + x[3] + 2*x[8] + x[4]))
+    c7  = 2*x[10]
+    c8  = 4*x[10]
+    c9  = x[9]*c4
+    c10 = x[9]/c5
+    c11 = 8*x[10]*c1
+    c12 = 8*x[10]*c4
+    # fill
+    ph.dpdsf[1,1] = c7*c1 + c1 + 2/3;   ph.dpdsf[1,2] = c7*c1 - 2*c2 + c1 - 1/c21;          ph.dpdsf[1,3] = zero(T);              ph.dpdsf[1,4] = zero(T);                                           ph.dpdsf[1,5] = c8*c1 + 2*c1 - 2/3; ph.dpdsf[1,6] = c8*c1 - 4*c2 + 2*c1 - 2/c21;         ph.dpdsf[1,7] = zero(T);              ph.dpdsf[1,8] = zero(T);      ph.dpdsf[1,9] = -1;      ph.dpdsf[1,10] = -2*c3 - 4/3;      
+    ph.dpdsf[2,1] = c8*c1 + 2*c1 - 2/3; ph.dpdsf[2,2] = c8*c1 - 4*c2 + 2*c1 - 2/c21;        ph.dpdsf[2,3] = zero(T);              ph.dpdsf[2,4] = zero(T);                                           ph.dpdsf[2,5] = c11 + 4*c1 + 2/3;   ph.dpdsf[2,6] = c11 - 8*c2 + 4*c1 - 4/c21;           ph.dpdsf[2,7] = zero(T);              ph.dpdsf[2,8] = zero(T);      ph.dpdsf[2,9] = zero(T);      ph.dpdsf[2,10] = -4*c3 - 2/3;      
+    ph.dpdsf[3,1] = -c7*c1 - c1;        ph.dpdsf[3,2] = -c7*c1 + 2*c2 - c1 + 2/3 + 1/c21;   ph.dpdsf[3,3] = -c9 - c7*c4 + c4;     ph.dpdsf[3,4] = -c9 + c10 - c7*c4 + c7/c5 + c4 + 2/3 - 1/c5;       ph.dpdsf[3,5] = -c8*c1 - 2*c1;      ph.dpdsf[3,6] = -c8*c1 + 4*c2 - 2*c1 - 2/3 + 2/c21;  ph.dpdsf[3,7] = -2*c9 - c8*c4 + 2*c4; ph.dpdsf[3,8] = -2*c9 + 2*c10 - c8*c4 + c8/c5 + 2*c4 - 2/3 - 2/c5;      ph.dpdsf[3,9] = c6/c5;      ph.dpdsf[3,10] = 2*c6/c5 + 2*c3;      
+    ph.dpdsf[4,1] = -c8*c1 - 2*c1;      ph.dpdsf[4,2] = -c8*c1 + 4*c2 - 2*c1 - 2/3 + 2/c21; ph.dpdsf[4,3] = -2*c9 - c8*c4 + 2*c4; ph.dpdsf[4,4] = -2*c9 + 2*c10 - c8*c4 + c8/c5 + 2*c4 - 2/3 - 2/c5; ph.dpdsf[4,5] = -c11 - 4*c1;        ph.dpdsf[4,6] = -c11 + 8*c2 - 4*c1 + 2/3 + 4/c21;    ph.dpdsf[4,7] = -4*c9 - c12 + 4*c4;   ph.dpdsf[4,8] = -4*c9 + 4*c10 - c12 + 8*x[10]/c5 + 4*c4 + 2/3 - 4/c5;      ph.dpdsf[4,9] = 2*c6/c5;      ph.dpdsf[4,10] = 4*c6/c5 + 4*c3;      
+    ph.dpdsf[5,1] = zero(T);            ph.dpdsf[5,2] = zero(T);                            ph.dpdsf[5,3] = c9 + c7*c4 - c4;      ph.dpdsf[5,4] = c9 - c10 + c7*c4 - c7/c5 - c4 - 2/3 + 1/c5;        ph.dpdsf[5,5] = zero(T);            ph.dpdsf[5,6] = zero(T);                             ph.dpdsf[5,7] = 2*c9 + c8*c4 - 2*c4;  ph.dpdsf[5,8] = 2*c9 - 2*c10 + c8*c4 - c8/c5 - 2*c4 + 2/3 + 2/c5;      ph.dpdsf[5,9] = -c6/c5;      ph.dpdsf[5,10] = -2*c6/c5;      
+    ph.dpdsf[6,1] = zero(T);            ph.dpdsf[6,2] = zero(T);                            ph.dpdsf[6,3] = 2*c9 + c8*c4 - 2*c4;  ph.dpdsf[6,4] = 2*c9 - 2*c10 + c8*c4 - c8/c5 - 2*c4 + 2/3 + 2/c5;  ph.dpdsf[6,5] = zero(T);            ph.dpdsf[6,6] = zero(T);                             ph.dpdsf[6,7] = 4*c9 + c12 - 4*c4;    ph.dpdsf[6,8] = 4*c9 - 4*c10 + c12 - 8*x[10]/c5 - 4*c4 - 2/3 + 4/c5;      ph.dpdsf[6,9] = -2*c6/c5;      ph.dpdsf[6,10] = -4*c6/c5;      
+    ph.dpdsf[7,1] = zero(T);            ph.dpdsf[7,2] = zero(T);                            ph.dpdsf[7,3] = zero(T);              ph.dpdsf[7,4] = zero(T);                                           ph.dpdsf[7,5] = zero(T);            ph.dpdsf[7,6] = zero(T);                             ph.dpdsf[7,7] = zero(T);              ph.dpdsf[7,8] = zero(T);      ph.dpdsf[7,9] = one(T);      ph.dpdsf[7,10] = zero(T);      
+    ph.dpdsf[8,1] = zero(T);            ph.dpdsf[8,2] = zero(T);                            ph.dpdsf[8,3] = zero(T);              ph.dpdsf[8,4] = zero(T);                                           ph.dpdsf[8,5] = zero(T);            ph.dpdsf[8,6] = zero(T);                             ph.dpdsf[8,7] = zero(T);              ph.dpdsf[8,8] = zero(T);      ph.dpdsf[8,9] = zero(T);      ph.dpdsf[8,10] = T(2);  
 
     return nothing
 end
@@ -252,26 +281,31 @@ end
 """
     Calculate G excess
 """
-function get_Gex!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_sf, n_eq, n_em}
+@generated function get_Gex!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_sf, n_eq, n_em}
+    quote 
+        a = SMatrix(ph.v_E)
+        b = SVector(ph.p)
+        c = SVector(ph.W)
 
-    a = ph.v_E;
-    b = ph.p;
-    c = ph.W;
-
-    @inbounds for i=1:n_em
-        it      = 1;
-        Gex_v = 0.0;
-        @inbounds for j=1:n_em-1
-            tmp = (a[i,j]-b[j]);
-            for k=j+1:n_em
-                Gex_v -= tmp*(a[i,k]-b[k])*c[it];
-                it = it + 1;
+        # @inbounds for i=1:n_em
+        x = Base.@ntuple $n_em i -> begin
+            @inline
+            it = 1
+            v  = zero(eltype(a))
+            aᵢ = a[i,:]
+            for j=1:$n_em-1
+                tmp = aᵢ[j] - b[j]
+                for k=j+1:$n_em
+                    @inbounds v = @muladd v - tmp*(aᵢ[k]-b[k])*c[it]
+                    it += 1
+                end
             end
+            v
         end
-        ph.Gex[i]  = Gex_v;
-    end
+        ph.Gex .= x
 
-    return nothing
+        return nothing
+    end
 end
 
 """
@@ -279,44 +313,43 @@ end
 """
 function get_idm!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_sf, n_eq, n_em}
 
-    for i=1:n_sf
-        if (ph.sf_off[i] == 1.0)
+    
+    for i in eachindex(ph.sf)
+        if isone(ph.sf_off[i])
             ph.sf[i] = 1.0;
         end
     end
 
-    sf5 = sqrt(ph.sf[5]);
-    sf6 = sqrt(ph.sf[6]);
-    sf7 = sqrt(ph.sf[7]);
+    sf5       = √ph.sf[5]
+    sf6       = √ph.sf[6]
+    sf7       = √ph.sf[7]
 
-    ph.idm[1]          = ph.sf[7]*ph.sf[1];
-    ph.idm[2]          = 2*sf7*ph.sf[3]*sf5;
-    ph.idm[3]          = ph.sf[7]*ph.sf[2];
-    ph.idm[4]          = 2*sf7*ph.sf[3]*sf6;
-    ph.idm[5]          = ph.sf[8]*ph.sf[2];
-    ph.idm[6]          = 2*sqrt(ph.sf[8])*ph.sf[4]*sf6;
-    ph.idm[7]          = ph.sf[9]*ph.sf[1];
-    ph.idm[8]          = 2*sf5*ph.sf[1]*sqrt(ph.sf[10]);
+    ph.idm[1] = ph.sf[7]*ph.sf[1];
+    ph.idm[2] = 2*sf7*ph.sf[3]*sf5;
+    ph.idm[3] = ph.sf[7]*ph.sf[2];
+    ph.idm[4] = 2*sf7*ph.sf[3]*sf6;
+    ph.idm[5] = ph.sf[8]*ph.sf[2];
+    ph.idm[6] = 2*sqrt(ph.sf[8])*ph.sf[4]*sf6;
+    ph.idm[7] = ph.sf[9]*ph.sf[1];
+    ph.idm[8] = 2*sf5*ph.sf[1]*sqrt(ph.sf[10]);
 
     return nothing
-
 end
 
 
 """
     compute chemical potential of endmembers
 """
-function get_mu!(ph::solution_phase{n_ox, n_sf, n_eq, n_em},gv) where {n_ox, n_sf, n_eq, n_em}
-    for i=1:lastindex(ph.idm)
-        if (ph.idm[i] == 0.0)
-            ph.idm[i] = 1.0;
+@generated function get_mu!(ph::solution_phase{n_ox, n_sf, n_eq, n_em},gv) where {n_ox, n_sf, n_eq, n_em}
+    quote
+        Base.@nexprs $n_em i -> begin
+            @inline
+            @inbounds a        = iszero(ph.idm[i]) ? 1.0 : ph.idm[i]
+            @inbounds ph.mu[i] = @muladd gv.R*ph.T*real(log(a)) + ph.gb[i] + ph.Gex[i];
+            @inbounds a        = ph.idm[i]
         end
+        return nothing
     end
-
-    for i=1:lastindex(ph.idm)
-        ph.mu[i] =  gv.R*ph.T*real(log(ph.idm[i])) + ph.gb[i] + ph.Gex[i];
-    end
-    return nothing
 end
 
 """
@@ -329,22 +362,21 @@ function get_gb!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_sf, 
     return nothing
 end
 
+@inline function get_cv!(ph::solution_phase)
+    c1 = ph.sf[6] + ph.sf[2]
+    c2 = ph.sf[8] + ph.sf[4]
+    c3 = ph.sf[5] + ph.sf[1]
 
-
-function get_cv!(ph::solution_phase{n_ox, n_sf, n_eq, n_em}) where {n_ox, n_sf, n_eq, n_em}
-
-    ph.cv[1] = (2 *ph.sf[6] + ph.sf[2])/(2 *ph.sf[6] + ph.sf[2] + 2 *ph.sf[5] + ph.sf[1])
-    ph.cv[2] = (2 *ph.sf[8] + ph.sf[4])/(2 *ph.sf[7] + ph.sf[3] + 2 *ph.sf[8] + ph.sf[4])
+    ph.cv[1] = (2 *c1)/(2 *c1 + 2 *c3)
+    ph.cv[2] = (2 *c2)/(2 *ph.sf[7] + ph.sf[3] + 2 *c2)
     ph.cv[3] = ph.sf[9]
     ph.cv[4] = 2 *ph.sf[10]
-    ph.cv[5] = -ph.sf[5] + ph.sf[1]
-    ph.cv[6] = -ph.sf[6] + ph.sf[2]
-    ph.cv[7] = -ph.sf[8] + ph.sf[4]
+    ph.cv[5] = -c3
+    ph.cv[6] = -c1
+    ph.cv[7] = -c2
 
     return nothing;
 end
-
-
 
 """
     convert compositional variables to site fractions
@@ -360,24 +392,22 @@ function get_ig(cv)
     Q2 =  cv[6];
     Q3 =  cv[7];
 
-    xMgT = 1/3 + 1/3*t - 1/3*x + 2/3*Q1 + (-1/3*t)*x;
-    xFeT = 1/3*x + 2/3*Q2 + 1/3*t*x;
-    xAlT = 2/3 - 1/3*t - 2/3*Q1 - 2/3*Q2 - 2/3*Q3 - 2/3*y + 2/3*c*y + 2/3*t*y;
-    xFe3T = 2/3*Q3 + 2/3*y + (-2/3*c)*y + (-2/3*t)*y;
-    xMgM = 1/3 - 1/3*Q1 + 1/3*t - 1/3*x + (-1/3*t)*x;
-    xFeM = -1/3*Q2 + 1/3*x + 1/3*t*x;
-    xAlM = 2/3 + 1/3*Q1 + 1/3*Q2 + 1/3*Q3 - c - 2/3*y - 5/6*t + 2/3*c*y + 2/3*t*y;
-    xFe3M = -1/3*Q3 + 2/3*y + (-2/3*c)*y + (-2/3*t)*y;
-    xCrM = c;
-    xTiM = 1/2*t;
+    xMgT  = @muladd 1/3 + 1/3*t - 1/3*x + 2/3*Q1 + (-1/3*t)*x;
+    xFeT  = @muladd 1/3*x + 2/3*Q2 + 1/3*t*x;
+    xAlT  = @muladd 2/3 - 1/3*t - 2/3*Q1 - 2/3*Q2 - 2/3*Q3 - 2/3*y + 2/3*c*y + 2/3*t*y;
+    xFe3T = @muladd 2/3*Q3 + 2/3*y + (-2/3*c)*y + (-2/3*t)*y;
+    xMgM  = @muladd 1/3 - 1/3*Q1 + 1/3*t - 1/3*x + (-1/3*t)*x;
+    xFeM  = @muladd -1/3*Q2 + 1/3*x + 1/3*t*x;
+    xAlM  = 2/3 + 1/3*Q1 + 1/3*Q2 + 1/3*Q3 - c - 2/3*y - 5/6*t + 2/3*c*y + 2/3*t*y;
+    xFe3M = @muladd -1/3*Q3 + 2/3*y + (-2/3*c)*y + (-2/3*t)*y;
+    xCrM  = c;
+    xTiM  = 1/2*t;
 
     #site fractions
     sf = [xMgT,xFeT,xAlT,xFe3T,xMgM,xFeM,xAlM,xFe3M,xCrM,xTiM];
 
     return sf
 end
-
-
 
 """
     Computes Gibbs energy and first derivative of the solution phase
@@ -411,8 +441,8 @@ function compute_G_dG!(gm,ph::solution_phase{n_ox, n_sf, n_eq, n_em},gv) where {
     #   rest of routine: ~300 ns
 
     # Compute raw and normalized Gibbs energy
-    ph.Graw   .= ph.mu'*ph.p;
-    ph.G      .= ph.Graw[1]*ph.f[1];
+    ph.Graw   .= ph.mu ⋅ ph.p;
+    ph.G      .= ph.Graw[1] * ph.f[1];
 
     # compute first derivatives
     ph.v_nem  .= (ph.mu .- ph.df .*ph.Graw).*ph.f;
@@ -423,20 +453,25 @@ function compute_G_dG!(gm,ph::solution_phase{n_ox, n_sf, n_eq, n_em},gv) where {
     i = n_sf;   j = n_sf - n_eq - ph.n_eq_off[1];
 
     # cannot use mul! to be allocation free here (variable Nullspace size) -> use old school style
+    a = SMatrix(gm.N)
+    b = SVector(ph.dGdsf)
+    c = SVector(ph.v_nem)
     for k = 1:j
-        ph.v_nem[k] = 0.0;
+        v = 0.0;
         for l = 1:i 
-            ph.v_nem[k] += ph.dGdsf[l]*gm.N[l,k]
+            v += b[l]*a[l,k]
         end
+        ph.v_nem[k] = v
     end
 
+    c = SVector(ph.v_nem)
     for k = 1:i
-        ph.grad[k] = 0.0;
+        v = 0.0;
         for l = 1:j 
-            ph.grad[k] += ph.v_nem[l]*gm.N[k,l]
+            v += c[l]*a[k,l]
         end
+        ph.grad[k] = v
     end
-    
 
     return nothing
 

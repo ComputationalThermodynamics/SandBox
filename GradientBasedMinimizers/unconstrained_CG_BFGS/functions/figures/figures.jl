@@ -54,9 +54,9 @@ function generate_min_time_vs_distance_figure(ph, gv, gm)
     if ph.ph == "clino-amphibole"
         ylims!((150.0, 1000))
     elseif ph.ph == "spinel"
-        ylims!((50.0, 300))
+        ylims!((0.0, 300))
     elseif ph.ph == "clinopyroxene"
-        ylims!((50.0, 800))
+        ylims!((0.0, 800))
     end
 
     Plots.savefig("tms_vs_distance_" * ph.ph * ".png")
@@ -68,9 +68,9 @@ function generate_min_time_vs_distance_figure(ph, gv, gm)
     if ph.ph == "clino-amphibole"
         ylims!((150.0, 600))
     elseif ph.ph == "spinel"
-        ylims!((50.0, 300))
+        ylims!((0.0, 300))
     elseif ph.ph == "clinopyroxene"
-        ylims!((50.0, 400))
+        ylims!((0.0, 400))
     end
 
     Plots.savefig("tms_vs_nite_" * ph.ph * ".png")
@@ -129,9 +129,9 @@ function generate_min_time_vs_normDeltaGamma_figure(ph, gv, gm)
     if ph.ph == "clino-amphibole"
         ylims!((150.0, 1000))
     elseif ph.ph == "spinel"
-        ylims!((50.0, 300))
+        ylims!((0.0, 300))
     elseif ph.ph == "clinopyroxene"
-        ylims!((50.0, 800))
+        ylims!((0.0, 800))
     end
 
     Plots.savefig("tms_vs_distance_" * ph.ph * ".png")
@@ -143,9 +143,9 @@ function generate_min_time_vs_normDeltaGamma_figure(ph, gv, gm)
     if ph.ph == "clino-amphibole"
         ylims!((150.0, 600))
     elseif ph.ph == "spinel"
-        ylims!((50.0, 300))
+        ylims!((0.0, 300))
     elseif ph.ph == "clinopyroxene"
-        ylims!((50.0, 400))
+        ylims!((0.0, 400))
     end
 
     Plots.savefig("tms_vs_nite_" * ph.ph * ".png")

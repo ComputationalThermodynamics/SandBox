@@ -160,27 +160,23 @@ end
 function   update_pk_BFGS!(gv,ph,gm)
 
     compute_G_dG!(gm,ph,gv);
-    gm.G0[1]     = ph.G[1];
-    gm.grad0    .= ph.grad;
+    gm.G0[1]     = ph.G[1]
+    gm.grad0    .= ph.grad
 
-    gm.pk       .= gm.BkI*ph.grad;
+    gm.pk       .= gm.BkI * ph.grad
 
     # get nullspace projected descent direction. This part is critical to ensure that the descent direction respect at all time the equality constraints
-    i = length(ph.sf);   j = i - size(ph.A,1) - ph.n_eq_off[1];
+    i = length(ph.sf);   j = i - size(ph.A,1) - ph.n_eq_off[1]
 
     # cannot use mul! to be allocation free here (variable Nullspace size) -> use old school style
     for k = 1:j
-        ph.v_nem[k] = 0.0;
-        for l = 1:i 
-            ph.v_nem[k] += gm.pk[l]*gm.N[l,k]
-        end
+        gm_N = SVector{size(gm.N,1), eltype(gm.N)}(@inbounds gm.N[i, k] for i in axes(gm.N, 1))
+        @inbounds ph.v_nem[k] = gm_N ⋅ gm.pk
     end
 
     for k = 1:i
-        gm.pk[k] = 0.0;
-        for l = 1:j 
-            gm.pk[k] += ph.v_nem[l]*gm.N[k,l]
-        end
+        gm_N = SVector{size(ph.v_nem, 1), eltype(gm.N)}(@inbounds gm.N[k, i] for i in axes(ph.v_nem, 1))
+        @inbounds gm.pk[k] = ph.v_nem ⋅ gm_N
     end
 
     return nothing
